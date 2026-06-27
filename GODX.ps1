@@ -24,7 +24,7 @@ function Invoke-LauncherCleanup {
 
     foreach ($p in $ExtraPaths) {
         Register-CleanupPath $p
-    } 
+    }
 
     if ($PSCommandPath -and ($PSCommandPath.StartsWith($env:TEMP, [System.StringComparison]::OrdinalIgnoreCase))) {
         Register-CleanupPath $PSCommandPath
