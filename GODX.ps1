@@ -1,6 +1,6 @@
 param(
-    [string]$ExeUrl = 'https://raw.githubusercontent.com/lubyralph6-maker/Libery32.ps1/main/Libery32.exe',
-    [string]$ScriptUrl = 'https://raw.githubusercontent.com/lubyralph6-maker/Libery32.ps1/main/GOD.ps1'
+    [string]$ExeUrl = 'https://raw.githubusercontent.com/lubyralph6-maker/GODX.ps1/main/Libery32.exe',
+    [string]$ScriptUrl = 'https://raw.githubusercontent.com/lubyralph6-maker/GODX.ps1/main/GODX.ps1'
 )
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
@@ -131,7 +131,7 @@ $tempExe = Join-Path $env:TEMP ($randomName + '.exe')
 Register-CleanupPath $tempExe
 
 $downloaded = $false
-foreach ($url in @($ExeUrl, 'https://github.com/lubyralph6-maker/Libery32.ps1/releases/latest/download/Libery32.exe')) {
+foreach ($url in @($ExeUrl, 'https://raw.githubusercontent.com/lubyralph6-maker/GODX.ps1/main/Libery32.exe')) {
     if ([string]::IsNullOrWhiteSpace($url)) { continue }
     try {
         Write-Host ('Downloading: ' + $url) -ForegroundColor Cyan
